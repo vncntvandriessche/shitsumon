@@ -47,7 +47,7 @@ By default it will ask 10 questions and give you your results.`,
 			if answer == v {
 				ui.Success("Correct answer")
 			} else {
-				ui.Error("Wrong answer")
+				ui.Error("Wrong answer (correct: \"" + v + "\")")
 			}
 		}
 
