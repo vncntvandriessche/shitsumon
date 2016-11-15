@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/dixonwille/wlog"
@@ -17,62 +18,60 @@ var questionCmd = &cobra.Command{
 By default it will ask 10 questions and give you your results.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var ui wlog.UI
+		var vocabulary map[string]string
+
+		title := viper.GetString("title")
+		amount := viper.GetInt("questions")
+
 		ui = wlog.New(os.Stdin, os.Stdout, os.Stdout)
 		ui = wlog.AddConcurrent(ui)
 		ui = wlog.AddColor(wlog.Blue, wlog.Red, wlog.Cyan, wlog.None, wlog.None, wlog.None, wlog.None, wlog.Green, wlog.Yellow, ui)
-		ui = wlog.AddPrefix("-", "[x]", "", "", "", "[-]", "[v]", "[!]", ui)
+		ui = wlog.AddPrefix("", "[x]", "", "", "", "[-]", "[v]", "[!]", ui)
 
-		ui.Info(viper.GetString("title"))
-
-		var v map[string]string
-		err := viper.UnmarshalKey("vocabulary", &v)
+		ui.Info(title)
+		err := viper.UnmarshalKey("vocabulary", &vocabulary)
 
 		if err != nil {
 			ui.Error("Unable to decode your \"vocabulary item in config file.\"")
-			ui.Output("")
-			ui.Output("Printing trace...")
-			panic(err)
 		}
 
-		for k, v := range v {
-			answer, err := ui.Ask("\"" + k + "\"")
+		count := 0
+		correct := 0
+		for question, valid_answer := range vocabulary {
+			count++
+
+			answer, err := ui.Ask(fmt.Sprintf("%v) \"%s\"", count, question))
 
 			if err != nil {
-				ui.Error("Something went pretty wrong posing this question.")
-				ui.Output("")
-				ui.Output("Printing trace...")
-				panic(err)
+				ui.Error("Something went wrong posing this question.")
 			}
 
-			if answer == v {
+			if answer == valid_answer {
 				ui.Success("Correct answer")
+				correct++
 			} else {
-				ui.Error("Wrong answer (correct: \"" + v + "\")")
+				ui.Error(fmt.Sprintf("Wrong answer (correct: \"%s\")", valid_answer))
+			}
+
+			if count >= amount {
+				break
 			}
 		}
 
-		// ui.Error("Error message")
-		// ui.Info("Info message")
-		// ui.Success("Success message")
-		// ui.Warn("Warning message")
+		wrong_answers := count - correct
 
-		// ui.Output("|" + q + "|")
+		ui.Info("\nSummary...")
+		ui.Output(fmt.Sprintf("Vocabulary count: %v", len(vocabulary)))
+		ui.Output(fmt.Sprintf("Questions asked: %v", count))
+		ui.Success(fmt.Sprintf("Correct answers: %v", correct))
+		ui.Error(fmt.Sprintf("Wrong answers: %v", wrong_answers))
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(questionCmd)
 
-	// Here you will define your flags and configuration settings.
 	viper.SetDefault("questions", "10")
 	viper.SetEnvPrefix("shitsumon")
 	viper.ReadInConfig()
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// questionCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// questionCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
