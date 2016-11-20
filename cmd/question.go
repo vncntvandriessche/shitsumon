@@ -73,5 +73,4 @@ func init() {
 
 	viper.SetDefault("questions", "10")
 	viper.SetEnvPrefix("shitsumon")
-	viper.ReadInConfig()
 }
