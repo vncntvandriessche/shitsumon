@@ -1,0 +1,5 @@
+package: github.com/vncntvandriessche/shitsumon
+import:
+- package: github.com/dixonwille/wlog
+- package: github.com/spf13/cobra
+- package: github.com/spf13/viper
